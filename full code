@@ -1,0 +1,863 @@
+import numpy as np
+import random
+import matplotlib.pyplot as plt
+import time
+
+
+scramble w/ red at front then switch to blue at front to solve
+1 = white
+2 = orange
+3 = blue
+4 = red
+5 = green
+6 = yellow
+
+
+middle = []
+cube = [front,top,back,bottom,left,right]
+
+
+
+
+
+
+# This will be the final list of moves to be outputted by the programme
+
+Moves = []
+
+
+def rotate(A):
+    array = np.array(A)
+    B = array.T
+    B[:,[0,2]] = B[:,[2,0]]
+    return B.tolist()
+
+        
+# not doing the turn multiple times just once, no matter what.
+def turn(side,number):
+    global top,front,left,right,back,bottom
+    a = number
+    if a != 0:
+        Top = np.array(top)
+        Front = np.array(front)
+        Left = np.array(left)
+        Right = np.array(right)
+        Back = np.array(back)
+        Bottom = np.array(bottom)
+            
+        Top2=Top.copy()
+        Front2=Front.copy()
+        Back2=Back.copy()
+        Bottom2=Bottom.copy()
+        Left2=Left.copy()
+        Right2=Right.copy()
+        if side == right:
+            
+            Front2[:,2],Top2[:,2],Back2[:,0],Bottom2[:,2] = Bottom[:,2],Front[:,2],np.flipud(Top[:,2]),np.flipud(Back[:,0])
+            Moves.append("R")
+            front,top,back,bottom,left,right =  Front2.tolist(),Top2.tolist(),Back2.tolist(),Bottom2.tolist(),Left.tolist(),rotate(right)
+            turn(right,a-1)
+        if side == left:
+        
+        
+            Bottom2[:,0],Front2[:,0],Top2[:,0],Back2[:,2] = Front[:,0],Top[:,0],np.flipud(Back[:,2]),np.flipud(Bottom[:,0])
+            Moves.append("L")
+            front,top,back,bottom,left,right = Front2.tolist(),Top2.tolist(),Back2.tolist(),Bottom2.tolist(),rotate(left),Right.tolist()
+            turn(left,a-1)
+        if side == top:              
+            Left2[0],Front2[0],Right2[0],Back2[0] =  Front[0],Right[0],Back[0],Left[0]
+            Moves.append("T")
+            front,top,back,bottom,left,right = Front2.tolist(),rotate(top),Back2.tolist(),Bottom2.tolist(),Left2.tolist(),Right2.tolist()
+            turn(top,a-1)
+        if side == bottom:            
+            Front2[2],Right2[2],Back2[2],Left2[2] = Left[2],Front[2],Right[2],Back[2]
+            Moves.append("B")
+            front,top,back,bottom,left,right = Front2.tolist(),Top2.tolist(),Back2.tolist(),rotate(bottom),Left2.tolist(),Right2.tolist()
+            turn(bottom,a-1)
+        if side == front:
+            
+            Right2[:,0],Top2[2],Left2[:,2],Bottom2[0] = Top[2],np.flipud(Left[:,2]), Bottom[0],np.flipud(Right[:,0])
+            Moves.append("F")
+            front,top,back,bottom,left,right = rotate(front),Top2.tolist(),Back2.tolist(),Bottom2.tolist(),Left2.tolist(),Right2.tolist()
+            turn(front,a-1)
+        if side == middle:
+            Front2[:,1],Top2[:,1],Back2[:,1],Bottom2[:,1] = Bottom[:,1], Front[:,1],np.flipud(Top[:,1]), np.flipud(Back[:,1])
+            Moves.append("M")
+            front,top,back,bottom,= Front2.tolist(),Top2.tolist(),Back2.tolist(),Bottom2.tolist()
+            turn(middle, a-1)
+'''''Now this function will allow us to change the face that we have at the front allowing us to 
+solve using only upper,lower,left right and front moves'''            
+def turncube(way):
+    global top,front,left,right,bottom,back
+    if way == left:
+        front,left,back,right,top = right,front,left,back,rotate(top)
+        bottom = rotate(bottom)
+        bottom = rotate(bottom)
+        bottom = rotate(bottom)
+        Moves.append("Turn Cube To the Left")
+    if way == right:
+        front,left,back,right,bottom = left,back,right,front,rotate(bottom)
+        top = rotate(top)
+        top = rotate(top)
+        top = rotate(top)
+        Moves.append("Turn Cube To the Right")
+        
+
+    
+    
+    
+            
+            
+'''Now I have done the turns I will start on the algorithm to take an unsolved rubix cube and output 
+a list of moves which will result in the final solved cube. '''
+
+'''Step 1 is called the dandelion step. We are aiming to create a dandelion on the top of the cube
+which has the yellow in the middle and then whites on all the rows middle pieces'''
+def dandelion():
+    global top,front,right,left,bottom,back
+    while top[0][1]+top[1][0]+top[1][2]+top[2][1] > 4:
+        if front[1][0] == 1:
+            while top[1][0] == 1:
+                turn(top, 1)
+            turn(left, 3)
+            dandelion()
+            return
+        if front[1][2] == 1:
+            while top[1][2] == 1:
+                turn(top, 1)
+            turn(right, 1)
+            dandelion()
+            return
+        if front[0][1]==1 or front[2][1] == 1:
+            turn(front, 1) 
+            dandelion()
+            return
+        else:
+            if right[0][1]==1 or right[1][0]==1 or right[1][2]==1 or right[2][1] == 1:
+                turncube(left)
+                dandelion()
+                return
+            if left[0][1]==1 or left[1][0]==1 or left[1][2]==1 or left[2][1] == 1:
+                turncube(right)
+                dandelion()
+                return
+            if back[0][1]==1 or back[1][0]==1 or back[1][2]==1 or back[2][1] == 1:
+                turncube(right)
+                turncube(right)
+                dandelion()
+                return
+            if bottom[1][0] == 1:
+                while top[1][0] == 1:
+                    turn(top, 1)
+                turn(left, 2)
+            if bottom[1][2] == 1:
+                while top[1][2]== 1:
+                    turn(top, 1)
+                turn(right, 2)
+            if bottom[0][1]==1 or bottom[2][1] == 1:
+                turn(bottom, 1)
+                if bottom[1][0] == 1:
+                    while top[1][0] == 1:
+                        turn(top, 1)
+                    turn(left, 2)
+                if bottom[1][2] == 1:
+                    while top[1][2]== 1:
+                        turn(top, 1)
+                    turn(right, 2)
+        if top[0][1]+top[1][0]+top[1][2]+top[2][1] == 4:
+            break
+
+'''We should now have a white cross on the top with a yellow square in the middle,
+so we will now match up the [0][1] elements of each front,right,left,back face with
+its centre piece, before sending them down to the bottom to create our white cross'''
+
+def whitecross():
+    global top,front,right,left,bottom,back
+
+    while bottom[0][1]+bottom[1][0]+bottom[1][2]+bottom[2][1] > 4:  
+        if top[1][0] == 1:
+            
+            if left[0][1]== left[1][1]:
+                turn(left, 2)
+        if top[1][2] == 1:   
+            if right[0][1] == right[1][1]:
+                turn(right, 2)
+        if top[2][1] == 1:        
+            if front[0][1] == front[1][1]:
+                turn(front, 2)
+        if top[0][1]== 1:        
+            if back[0][1] == back[1][1]:
+                turncube(left)
+                turn(right, 2)
+           
+        if bottom[0][1]+bottom[1][0]+bottom[1][2]+bottom[2][1] == 4:
+            break
+        else:
+             turn(top, 1)
+             whitecross()
+             return
+        
+        
+'''we should now have a cube which has a white cross on the bottom, our next step is to complete
+the rest of the white face which will in turn, complete the first layer of all colours.'''
+
+counter_two = 1
+counter_three = 1
+def whiteface():
+    global counter,counter_two,counter_three
+    while sum(bottom[0])+sum(bottom[1]) + sum(bottom[2]) > 9:
+        #whites are in the corners on the top row
+        
+
+        for i in range(4):
+            if right[0][0] == 1 and front[0][2] == front[1][1]:
+                turn(right, 1)
+                turn(top, 1)
+                turn(right, 3)
+                counter_two = 1
+                counter_three = 1
+                whiteface()
+                return
+            if left[0][2] == 1 and front[0][0] == front[1][1]:
+                turn(left, 3)
+                turn(top, 3)
+                turn(left, 1)
+                counter_two = 1
+                counter_three = 1
+                whiteface()
+                return
+            turn(top, 1)
+        if counter_two< 4:
+            counter_two +=1
+            turncube(left)
+            whiteface()
+            return
+        else:
+        
+            
+                    
+                   
+        #we now need to code the bit which will turn the cube around 4 times and restart whiteface each time
+
+        
+        # now we will do the case of the whites being at the bottom row, which after 
+        # we identify and then do the move once before we restart again and the white 
+        # should be at the top again
+            if right[2][0]==1 or left[2][2] == 1:
+                if right[2][0] == 1:
+                    turn(right, 1)
+                    turn(top, 1)
+                    turn(right, 3)
+                    counter_two = 1
+                    counter_three = 1
+                    whiteface()
+                    return
+                if left[2][2] == 1:
+                    turn(left, 3)
+                    turn(top, 3)
+                    turn(left, 1)
+                    counter_two = 1
+                    counter_three = 1
+                    whiteface()
+                    return
+            else :
+                turncube(left)
+                counter_three +=1
+                if counter_three < 4:
+                    counter_two = 1
+                    whiteface()
+                    return
+                    
+                else:
+                    
+            #we have now done if the white corners are at the bottom row and weve moved them up
+            # before rerunning the code for getting them on the top layer
+            # for our final step we will do if the white corners are on the top layer.
+                    if top[0][0]== 1 or top[0][2]==1 or top[2][0]==1 or top[2][2] == 1:
+                        while bottom[0][2] == 1:
+                            turncube(left)
+                        while top[2][2] > 1:
+                            turn(top, 1)
+                        turn(right, 1)
+                        turn(top, 1)
+                        turn(right, 3)
+                        counter = 1
+                        counter_two = 1
+                        counter_three = 1
+                        whiteface()
+                        return
+            
+#now we should have a cube which has a white face on the bottom and the first layers
+# should match up with the middle square on each face. Now it is time to do the 
+# T method which should be easier as we only need to rotate the cube and the top layer.
+
+def Tmethod():
+    for i in range(4):
+        for i in range(4):
+            if front[0][1] == front [1][1]:
+                if top[2][1] == right[1][1]:
+                    turn(top, 1)
+                    turn(right, 1)
+                    turn(top, 1)
+                    turn(right, 3)
+                    turn(top, 3)
+                    turncube(left)
+                    turn(left, 3)
+                    turn(top, 3)
+                    turn(left, 1)
+                    Tmethod()
+                    return
+                if top[2][1] == left[1][1]:
+                    turn(top, 3)
+                    turn(left, 3)
+                    turn(top, 3)
+                    turn(left, 1)
+                    turn(top, 1)
+                    turncube(right)
+                    turn(right, 1)
+                    turn(top, 1)
+                    turn(right, 3)
+                    Tmethod()
+                    return
+                if top[2][1] == 6:
+                    break
+            else:
+                turn(top, 1)
+        turncube(left)
+    #by this point its either complete, or were stuck with a yellow on all
+    # 4 top middle pieces, we need to find an uncomplete side and do the move again
+    # which will allow us to restart our Tmethod function and hopefully 
+    for i in range(4):
+        if front[1][0] == 6:
+            turn(left, 3)
+            turn(top, 3)
+            turn(left, 1)
+            turn(top, 1)
+            turncube(right)
+            turn(right, 1)
+            turn(top, 1)
+            turn(right, 3)
+            Tmethod()
+            return
+        if front[1][2] == 6:
+            turn(right, 1)
+            turn(top, 1)
+            turn(right, 3)
+            turn(top, 3)
+            turncube(left)
+            turn(left, 3)
+            turn(top, 3)
+            turn(left, 1)
+            Tmethod()
+            return
+        if front[1][0]!=front[1][1]:
+            turn(left, 3)
+            turn(top, 3)
+            turn(left, 1)
+            turn(top, 1)
+            turncube(right)
+            turn(right, 1)
+            turn(top, 1)
+            turn(right, 3)
+            Tmethod()
+            return
+        if front[1][2] != front[1][1]:
+            turn(right, 1)
+            turn(top, 1)
+            turn(right, 3)
+            turn(top, 3)
+            turncube(left)
+            turn(left, 3)
+            turn(top, 3)
+            turn(left, 1)
+            Tmethod()
+            return
+            
+            
+        else:
+            turncube(left)
+            
+# Now we should have the first 2 layers completed so we can start on the
+# algorithms for solving the yellow cross.
+
+def yellow_cross():
+    while top[0][1] + top[1][0] + top[1][2] + top[2][1] != 24:
+        for i in range(4):
+            if top[0][1] + top[1][0] == 12:
+                turn(front, 1)
+                turn(top, 1)
+                turn(right, 1)
+                turn(top, 3)
+                turn(right, 3)
+                turn(front, 3)
+                return
+            if top[1][0] + top[1][2] == 12:
+                turn(front, 1)
+                turn(right, 1)
+                turn(top, 1)
+                turn(right, 3)
+                turn(top,3)
+                turn(front, 3)
+                return
+            else:
+                turn(top, 1)
+        #by this point its gone through all of the rotations and if none
+        # of them have been part of the 2 cases then we know its the 
+        #third case of just a yellow dot in the centre
+        turn(front, 1)
+        turn(top, 1)
+        turn(right, 1)
+        turn(top, 3)
+        turn(right, 3)
+        turn(front, 3)
+        turncube(left)
+        turn(front, 1)
+        turn(right, 1)
+        turn(top, 1)
+        turn(right, 3)
+        turn(top,3)
+        turn(front, 3)
+        return
+        
+#that should work for the yellow dot so now we should have a cube with
+# 2 layers solved and a yellow cross on the top. We now need more 
+# algorithms to solve the rest of the yellow face
+
+def yellow_face():
+    if bool(sum(top[0])+sum(top[1])+sum(top[2]) ==54) == False:
+        for i in range(4):
+            if front[0][0]+front[0][2]+back[0][0]+back[0][2] == 24:
+                turn(front, 1)
+                turn(right, 1)
+                turn(top, 1)
+                turn(right, 3)
+                turn(top, 3)
+                turn(right, 1)
+                turn(top, 1)
+                turn(right, 3)
+                turn(top, 3)
+                turn(right, 1)
+                turn(top, 1)
+                turn(right, 3)
+                turn(top, 3)
+                turn(front, 3)
+                return
+    
+            if front[0][2]+left[0][0]+left[0][2]+back[0][0] == 24:
+                turn(right, 1)
+                turn(top, 2)
+                turn(right, 2)
+                turn(top, 3)
+                turn(right, 2)
+                turn(top, 3)
+                turn(right, 2)
+                turn(top, 2)
+                turn(right, 1)
+                return
+        
+            if front[0][0]+right[0][2] == 12:
+                if right[0][0] + back[0][2] == 12:
+                    turncube(right)
+                    turncube(right)
+                    yellow_face()
+                    return
+                if left[0][0] + front[0][2] == 12:
+                    turncube(left)
+                    yellow_face()
+                    return
+                else:             
+                    turn(right, 3)
+                    turn(front, 1)
+                    turn(right, 1)
+                    turncube(right)
+                    turn(left, 3)
+                    turncube(left)
+                    turn(right, 3)
+                    turn(front, 3)
+                    turn(right, 1)
+                    turncube(right)
+                    turn(left, 1)
+                    return
+        
+            if front[0][0]+front[0][2] == 12:
+                if left[0][0] + right[0][2] == 12:
+                    turncube(left)
+                    yellow_face()
+                else:
+                    turn(left, 2)
+                    turn(bottom, 3)
+                    turn(left, 1)
+                    turn(top, 2)
+                    turn(left, 3)
+                    turn(bottom, 1)
+                    turn(left, 1)
+                    turn(top, 2)
+                    turn(left, 1)
+                    return
+            
+            if front[0][2]+back[0][0]==12:
+                turn(right, 3)
+                turn(front, 3)
+                turn(left, 1)
+                turn(front,1)
+                turn(right, 1)
+                turn(front, 3)
+                turn(left, 3)
+                turn(front, 1)
+                return
+            
+            if front[0][2]+back[0][2]+right[0][2] == 18:
+                turn(right, 1)
+                turn(top, 1)
+                turn(right, 3)
+                turn(top, 1)
+                turn(right, 1)
+                turn(top, 2)
+                turn(right, 3)
+                return
+            
+            if front[0][0]+left[0][0]+right[0][0] == 18:
+                turn(right, 1)
+                turn(top, 2)
+                turn(right, 3)
+                turn(top, 3)
+                turn(right, 1)
+                turn(top, 3)
+                turn(right, 3)
+                return
+            else:
+                turncube(left)
+    
+#the code will run through a maximum of 4 times in which it will test every
+# algorithm. In a few cases there is an overlap between where the yellows
+#need to be but because of the order it should still work.
+
+
+def matching_corners():
+    counter = 0
+    if front[0][0] == front[0][2]:
+        counter += 1
+       
+        
+    if right[0][0] == right[0][2]:
+        counter +=1
+        
+       
+       
+    if left[0][0] == left[0][2]:
+        counter +=1
+       
+                
+    if back[0][0] == back[0][2]:
+        counter +=1
+                
+    if counter == 0:
+        turn(front, 1)
+        turn(right, 1)
+        turn(top, 3)
+        turn(right, 3)
+        turn(top, 3)
+        turn(right, 1)
+        turn(top, 1)
+        turn(right, 3)
+        turn(front, 3)
+        turn(right, 1)
+        turn(top, 1) 
+        turn(right, 3)    
+        turn(top, 3)
+        turn(right, 3)
+        turn(front, 1)
+        turn(right, 1)
+        turn(front, 3)
+        matching_corners()
+        return
+    if counter == 1:
+        while front[0][0] != front[0][2]:
+            turn(top, 1)
+        
+        if front[0][0] == left[1][1]:
+            turn(top, 1)
+        if front[0][0] == front[0][2]:
+            if front[0][0] == right[1][1]:
+                turn(top,3)
+                turncube(left)
+                turncube(left)
+        if front[0][0] == front[0][2]:
+            if front[0][0] == back[1][1]:
+                turn(top, 2)
+                turncube(right)
+        if front[0][0] == front[0][2]:            
+            if front[0][0] == front[1][1]:
+                turncube(left) # now its made the change into the right place and this also applies so it will then move it to the wrong place before doing the moves
+        turn(left, 3)
+        turn(top, 1)
+        turn(right, 1)
+        turn(top, 3)
+        turn(left, 1)
+        turn(top, 2)
+        turn(right, 3)
+        turn(top, 1)
+        turn(right, 1)
+        turn(top, 2)
+        turn(right, 3)
+        matching_corners()
+        return
+    if counter == 4:  
+        if front[0][0] != front[0][1] and left[0][0]!=left[0][1] and right[0][0]!=right[0][1] and back[0][0] != back[0][1]:
+            return
+        else:
+            while front[0][0] != front[0][1]:
+                turn(top, 1)
+            if front[0][0] == front[0][1]:
+                if front[0][0] == left[1][1]:
+                    turn(top, 1)
+                    turncube(left)
+            if front[0][0] == front[0][1]:
+                if front[0][0] == right[1][1]:
+                    turn(top,3)
+                    turncube(right)
+            if front[0][0] == front[0][1]:
+                if front[0][0] == back[1][1]:
+                    turn(top, 2)
+            if front[0][0] == front[0][1]:
+                if front[0][0] == front[1][1]:
+                    turncube(left)
+                    turncube(left)
+            if left[0][1]==right[1][1]:
+                turn(left, 3)
+                turn(top, 1)
+                turn(left, 3)
+                turn(top, 3)
+                turn(left,3)
+                turn(top, 3)
+                turn(left, 3)
+                turn(top, 1)
+                turn(left, 1)
+                turn(top,1)
+                turn(left, 2)
+                return
+            if right[0][1]==left[1][1]:
+                turn(right, 1)
+                turn(top, 3)
+                turn(right, 1)
+                turn(top, 1)
+                turn(right, 1)
+                turn(top, 1)
+                turn(right, 1)
+                turn(top, 3)
+                turn(right, 3)
+                turn(top, 3)
+                turn(right,2)
+                return
+            
+# by this point we should have a fully solved rubix cube but it could be
+# one of 2 cases where we need to do a final few moves.
+
+def opp_adj():
+    while front[0][0] != front[1][1]:
+        turn(top, 1)
+    if front[0][1] != front[1][1]:
+        if front[0][1] == right[1][1]:
+            turn(middle, 1)
+            turn(top, 3)
+            turn(middle, 2)
+            turn(top, 3)
+            turn(middle, 2)
+            turn(top, 3)
+            turn(middle, 1)
+            turn(top, 2)
+            turn(middle, 2)
+            turn(top, 1)
+        if front[0][1] == left[1][1]:
+            turncube(right)
+            turn(middle, 1)
+            turn(top, 3)
+            turn(middle, 2)
+            turn(top, 3)
+            turn(middle, 2)
+            turn(top, 3)
+            turn(middle, 1)
+            turn(top, 2)
+            turn(middle, 2)
+            turn(top, 1)
+        if front[0][1] == back[1][1]:
+            turn(middle, 2)
+            turn(top, 3)
+            turn(middle, 2)
+            turn(top, 2)
+            turn(middle, 2)
+            turn(top, 3)
+            turn(middle, 2)
+    
+    
+    
+def finalmoves():
+    for i in range(len(Moves)-4):
+        if Moves[i] == Moves[i+1] == Moves[i+2] == Moves[i+3]:
+            del Moves[i:i+4]
+            finalmoves()
+            return
+    for i in range(len(Moves)-2):
+        if Moves[i] == "Turn Cube To the Left":
+            if Moves[i+1] == "Turn Cube to the Right":
+                del Moves[i:i+2]
+                finalmoves()
+                return
+        if Moves[i] == "Turn Cube To the Right":
+            if Moves[i+1] == "Turn Cube to the Left":
+                del Moves[i:i+2]
+                finalmoves()
+                return
+    for i in range(len(Moves)-3):
+        if Moves[i] == Moves[i+1] == Moves[i+2]:
+            if Moves[i]== "R":
+                Moves[i]= "R'"
+                del Moves[i+1:i+3]
+                finalmoves()
+                return
+            if Moves[i] == "L":
+                Moves[i] = "L'"
+                del Moves[i+1:i+3]
+                finalmoves()
+                return
+            if Moves[i] == "T":
+                Moves[i] = "T'"
+                del Moves[i+1:i+3]
+                finalmoves()
+                return
+            if Moves[i] == "F":
+                Moves[i] = "F'"
+                del Moves[i+1:i+3]
+                finalmoves()
+                return
+            if Moves[i] == "Turn Cube To the Left":
+                Moves[i] = "Turn Cube To the Right"
+                del Moves[i+1:i+3]
+                finalmoves()
+                return
+            if Moves[i] == "Turn Cube To the Right":
+                Moves[i] = "Turn Cube To the Left"
+                del Moves[i+1:i+3]
+                finalmoves()
+                return
+    for i in range(len(Moves)-1):
+        if Moves[i] == Moves[i+1]:
+            if Moves[i] == "R":
+                Moves[i] = "R2"
+                del Moves[i+1]
+                finalmoves()
+                return
+            if Moves[i] == "L":
+                Moves[i] = "L2"
+                del Moves[i+1]
+                finalmoves()
+                return
+            if Moves[i] == "T":
+                Moves[i] = "T2"
+                del Moves[i+1]
+                finalmoves()
+                return
+            if Moves[i] == "F":
+                Moves[i] = "F2"
+                del Moves[i+1]
+                finalmoves()
+                return
+        
+            
+            
+                
+                
+def solve():
+    dandelion()
+    whitecross()
+    whiteface()
+    Tmethod()
+    yellow_cross()    
+    yellow_face()
+    matching_corners()
+    opp_adj()
+    finalmoves()
+    return Moves
+'''
+print('Please put the white face on the bottom and the blue face at the front. The following numbers correspond to the colours such that: 1 = white, 2 = Orange, 3 = Blue, 4 = Red, 5 = Green, 6 = Yellow' )                
+toP = input('Please enter the top face, from left to right, top to bottom: ')
+fronT = input('Please enter the front face, from left to right, top to bottom: ')               
+lefT = input('Please enter the left face, from left to right, top to bottom: ')
+righT = input('Please enter the right face, from left to right, top to bottom: ')
+bacK = input('Please enter the back face, from left to right, top to bottom: ')
+bottoM = input('Please enter the bottom face, from left to right, top to bottom: ')        
+        
+       
+top3 = []   
+front3 = []
+left3 = []
+right3 = []
+back3 = []
+bottom3 = []
+top4 = []   
+front4 = []
+left4= []
+right4 = []
+back4 = []
+bottom4 = []
+
+for i in toP:
+    top3.append([int(n) for n in i])  
+    top4.append( [item for sublist in top3 for item in sublist])
+top = [top4[2],top4[5][-3:],top4[8][-3:]]
+for i in fronT:
+    front3.append([int(n) for n in i])  
+    front4.append( [item for sublist in front3 for item in sublist])
+front = [front4[2],front4[5][-3:],front4[8][-3:]]
+for i in lefT:
+    left3.append([int(n) for n in i])  
+    left4.append( [item for sublist in left3 for item in sublist])
+left = [left4[2],left4[5][-3:],left4[8][-3:]]
+for i in righT:
+    right3.append([int(n) for n in i])  
+    right4.append( [item for sublist in right3 for item in sublist])
+right = [right4[2],right4[5][-3:],right4[8][-3:]]
+for i in bacK:
+    back3.append([int(n) for n in i])  
+    back4.append( [item for sublist in back3 for item in sublist])
+back = [back4[2],back4[5][-3:],back4[8][-3:]]
+for i in bottoM:
+    bottom3.append([int(n) for n in i])  
+    bottom4.append( [item for sublist in bottom3 for item in sublist])
+bottom = [bottom4[2],bottom4[5][-3:],bottom4[8][-3:]]
+
+print(solve())   
+    
+'''
+        
+def scramble():
+    global top,bottom,left,right,front,middle
+    for i in range(10):
+        turn(top, random.randint(0, 4))
+        turn(bottom, random.randint(0, 4))
+        turn(left, random.randint(0, 4))
+        turn(right, random.randint(0, 4))
+        turn(front, random.randint(0, 4))
+        
+        
+def analyse(n):
+    Amount_of_moves = []
+    time_to_solve = []
+    for i in range(n):
+        scramble()
+        Moves.clear()
+        start_time = time.perf_counter()
+        solve() 
+        end_time = time.perf_counter()
+        solve_time = end_time - start_time
+        Amount_of_moves.append(len(Moves))
+        time_to_solve.append(solve_time)
+    plt.figure(1)
+    plt.boxplot(Amount_of_moves)
+    plt.figure(2)
+    plt.hist(time_to_solve)
+    print("The max amount of moves it took to solve was: " ,max(Amount_of_moves))
+    print("The min amount of moves it took to solve was: " ,min(Amount_of_moves))
+    print("The average amount of moves it took to solve was: " ,sum(Amount_of_moves)/len(Amount_of_moves))
+    print("The average amount of time it takes to solve a Rubik's cube is:", sum(time_to_solve)/len(time_to_solve))
+    
